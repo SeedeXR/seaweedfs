@@ -12,7 +12,9 @@
 services:
   seaweedfs:
     build:
-      context: ../..
+      # Relative to the repo root: Coolify runs compose with --project-directory
+      # set to the Base Directory (/), not this file's directory.
+      context: .
       dockerfile: docker/Dockerfile.coolify
       args:
         # Coolify passes the git SHA when "Include Source Commit in Build" is on.

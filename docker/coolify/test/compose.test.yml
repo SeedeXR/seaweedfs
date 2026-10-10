@@ -21,7 +21,7 @@ services:
       - "127.0.0.1:${TEST_ADMIN_PORT:-19443}:9443"
       - "127.0.0.1:${TEST_ADMIN_HTTP_PORT:-19080}:9080"
     volumes:
-      - ./test/traefik-dynamic.yml:/etc/traefik/dynamic.yml:ro
+      - ./docker/coolify/test/traefik-dynamic.yml:/etc/traefik/dynamic.yml:ro
     depends_on:
       seaweedfs:
         condition: service_healthy

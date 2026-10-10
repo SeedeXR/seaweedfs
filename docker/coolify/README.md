@@ -75,13 +75,27 @@ The app identity can Get, Put, Head and Delete objects, and List them with a pre
 
 Use two hostnames:
 
-- **`s3.example.com`: DNS only (grey cloud).** Presigned PUTs and server calls go here. Cloudflare's free plan rejects request bodies over 100 MB, and videos can reach 500 MB. Bypassing the proxy also keeps the SigV4-signed `Host` header exactly as the client signed it.
+- **`s3.example.com`: DNS only (grey cloud).** Presigned PUTs and server calls go here. Proxying this hostname breaks S3 in four ways, all observed on a live deployment:
+  - Cloudflare's free plan rejects request bodies over 100 MB, and videos can reach 500 MB.
+  - Cloudflare turns `HEAD` into `GET` for keys with a cacheable extension (`.webp`, `.bin`, ...). The signature was made for `HEAD`, so `HeadObject` fails with 403.
+  - Browser Integrity Check answers some HTTP clients, such as Python's `urllib`, with error 1010.
+  - The free certificate covers one subdomain level only, so a name like `www.s3.example.com` fails TLS.
 - **`media.example.com`: Proxied (orange cloud).** Public reads go here, as path-style URLs: `https://media.example.com/<bucket>/<key>`.
   - Add a **Cache Rule** for this hostname: *Eligible for cache*, with *Edge TTL: use cache-control header if present*. Without it, Cloudflare only caches known extensions, so `.m3u8` and `.ts` HLS files would not be cached.
   - Objects written with `Cache-Control: public, max-age=31536000, immutable` are then cached for a year at the edge.
   - Cloudflare free caches files up to 512 MB. Larger files are still served, just not cached.
   - Set SSL/TLS mode to **Full (strict)**. Coolify's Let's Encrypt certificate is valid.
   - Keep `S3_ALLOWED_ORIGINS=*`. The free plan does not vary its cache on `Origin`, so a per-origin `Access-Control-Allow-Origin` value would be cached and served to other sites.
+
+### Coolify's proxy: allow long uploads
+
+Coolify's Traefik keeps Traefik's default 60-second read timeout. An upload that takes longer than a minute fails with 502, which is about 130 MB on a 2 MB/s link. Under **Servers → your server → Proxy**, add this line to the Traefik `command:` list, then restart the proxy:
+
+```
+- '--entrypoints.https.transport.respondingTimeouts.readTimeout=3600s'
+```
+
+That covers a 500 MB upload at about 150 KB/s. The restart briefly interrupts every app on that server.
 
 Point apps at the right hostname for each job. For example, the Njozi app uses `S3_PUBLIC_ENDPOINT=https://s3.example.com` for presigning and server calls, and `S3_PUBLIC_URL_MEDIA=https://media.example.com/njozi-media` for reads.
 

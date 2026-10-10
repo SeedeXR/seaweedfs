@@ -1,0 +1,56 @@
+#
+# Builds the weed binary from the local source tree (unlike Dockerfile.go_build,
+# which clones GitHub), so the image always matches the checked-out commit.
+# Used by docker/coolify/docker-compose.yml; build context is the repo root and
+# Dockerfile.coolify.dockerignore keeps that context to the Go sources only.
+
+FROM --platform=$BUILDPLATFORM golang:1.26.9-alpine3.23 AS builder
+WORKDIR /src
+COPY go.mod go.sum ./
+RUN --mount=type=cache,target=/go/pkg/mod go mod download
+COPY weed ./weed
+COPY telemetry/proto ./telemetry/proto
+ARG TARGETOS TARGETARCH SOURCE_COMMIT=
+# -trimpath and -s -w drop build paths and debug tables: a smaller binary that
+# starts faster and does not leak the build host layout. The cache mounts make
+# Coolify redeploys incremental instead of full rebuilds.
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
+    go build -trimpath \
+      -ldflags "-s -w -X github.com/seaweedfs/seaweedfs/weed/util/version.COMMIT=${SOURCE_COMMIT}" \
+      -o /out/weed ./weed
+
+FROM alpine:3.23
+# The binary is static (CGO off), so the runtime needs no libraries; busybox
+# wget serves the healthcheck and openssl mints the per-boot gRPC mTLS
+# certificates (start.sh). No fuse, curl or su-exec: this image never mounts
+# and never starts as root.
+RUN apk upgrade --no-cache && \
+    apk add --no-cache "openssl~3.5" && \
+    addgroup -g 1000 seaweed && \
+    adduser -D -H -u 1000 -G seaweed seaweed && \
+    mkdir -p /data /etc/seaweedfs && \
+    chown seaweed:seaweed /data /etc/seaweedfs
+COPY --from=builder /out/weed /usr/bin/weed
+COPY --chmod=755 docker/entrypoint.sh /entrypoint.sh
+COPY --chmod=755 docker/coolify/start.sh /start.sh
+COPY docker/filer.toml /etc/seaweedfs/filer.toml
+
+# A fresh named volume inherits /data's ownership from the image, so the
+# non-root user can write it. Bind mounts must be owned by uid 1000.
+USER 1000:1000
+VOLUME /data
+WORKDIR /data
+
+# S3 API and admin UI, plus Prometheus metrics for an internal scraper. Every
+# other port stays inside the container network.
+EXPOSE 8333 23646 9327
+
+# S3 starts last in `weed mini`, so a healthy S3 means the whole stack is up.
+HEALTHCHECK --interval=15s --timeout=5s --start-period=60s --retries=5 \
+  CMD ["wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8333/healthz"]
+
+# start.sh validates credentials and renders S3 identities, then execs /entrypoint.sh.
+ENTRYPOINT ["/start.sh"]
+CMD ["mini", "-dir=/data"]

@@ -31,10 +31,11 @@ This deploys SeaweedFS as one `weed mini` process on one persistent volume. That
    - `media.` is the public read hostname that Cloudflare will cache. It is optional.
    - `storage-admin.` is the admin UI. It is optional, so leave it out to keep the UI unreachable.
    - Never attach a domain to any other port.
-4. Under **Environment Variables**, set `S3_APP_BUCKETS`, and `S3_PUBLIC_READ_BUCKETS` if any buckets serve public reads. See [Settings](#settings).
-5. Optional: under **Advanced**, set **Source commit availability** to **Available during build**, so the admin UI footer shows the deployed commit. It costs little: `SOURCE_COMMIT` is read after the source is copied in, and the Go build cache keeps rebuilds incremental.
-6. Deploy. The first build takes a few minutes. Later builds reuse the Go module and build caches.
-7. Check it: `curl -fsS https://s3.example.com/healthz` returns 200. Sign in to the admin UI as `admin` with `SERVICE_PASSWORD_ADMIN`.
+4. Under **Environment Variables**, set `S3_APP_BUCKETS`, `S3_PUBLIC_READ_BUCKETS` if any buckets serve public reads, and `S3_PUBLIC_URL` (your S3 URL without a port, e.g. `https://s3.example.com`). See [Settings](#settings). The container will not start while `S3_APP_BUCKETS` is empty.
+5. Under **Advanced**, set **Build arguments** to **Managed manually in Dockerfile**. When it is set to inject them automatically, Coolify writes an `ARG` line for every variable, secrets included, into the Dockerfile, and BuildKit records their values in the image history. The Dockerfile already declares the only build arg it uses, `SOURCE_COMMIT`.
+6. Optional: under **Advanced**, set **Source commit availability** to **Available during build**, so the admin UI footer shows the deployed commit. It costs little: `SOURCE_COMMIT` is read after the source is copied in, and the Go build cache keeps rebuilds incremental.
+7. Deploy. The first build takes a few minutes. Later builds reuse the Go module and build caches.
+8. Check it: `curl -fsS https://s3.example.com/healthz` returns 200. Sign in to the admin UI as `admin` with `SERVICE_PASSWORD_ADMIN`.
 
 Coolify generates these secrets, and they don't change on redeploy:
 
@@ -52,6 +53,7 @@ Coolify generates these secrets, and they don't change on redeploy:
 | `S3_APP_BUCKETS` | required | Buckets the app identity may use, comma separated. They are created on first start |
 | `S3_PUBLIC_READ_BUCKETS` | empty | Buckets whose objects anyone can GET by exact key. Listing them stays private |
 | `S3_ALLOWED_ORIGINS` | `*` | CORS origins. Keep `*` when a CDN caches public reads (see Cloudflare below) |
+| `S3_PUBLIC_URL` | empty | Public S3 URL without a port, e.g. `https://s3.example.com`. Shown in the admin UI and tried first when verifying signatures. Optional |
 | `S3_BUCKET` | `S3_APP_BUCKETS` | Extra buckets to create on startup |
 | `ADMIN_USER` | `admin` | Admin UI user name |
 | `GOMEMLIMIT` | empty | Soft heap cap for the Go GC. Set it to about 90% of the container memory limit, e.g. `900MiB` for 1 GiB |

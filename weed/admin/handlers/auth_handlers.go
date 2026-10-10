@@ -28,7 +28,7 @@ func (a *AuthHandlers) ShowLogin(w http.ResponseWriter, r *http.Request) {
 	session, err := a.sessionStore.Get(r, dash.SessionName())
 	var csrfToken string
 	if err == nil {
-		if authenticated, _ := session.Values["authenticated"].(bool); authenticated {
+		if dash.SessionIsAuthenticated(session) {
 			http.Redirect(w, r, dash.P(r.Context(), "/admin"), http.StatusSeeOther)
 			return
 		}
@@ -49,7 +49,7 @@ func (a *AuthHandlers) ShowLogin(w http.ResponseWriter, r *http.Request) {
 
 	// Render login template
 	w.Header().Set("Content-Type", "text/html")
-	loginComponent := layout.LoginForm("SeaweedFS Admin", errorMessage, csrfToken)
+	loginComponent := layout.LoginForm("SeedeXR Storage", errorMessage, csrfToken)
 	if err := loginComponent.Render(r.Context(), w); err != nil {
 		writeJSONError(w, http.StatusInternalServerError, "Failed to render login template: "+err.Error())
 		return

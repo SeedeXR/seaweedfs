@@ -111,10 +111,10 @@ func (s *AdminServer) GetDashboardTrends() DashboardTrends {
 		Volumes:      sparklineSVG(series(func(s dashSample) float64 { return s.volumes }), "#1cc88a"),  // success
 		Chunks:       sparklineSVG(series(func(s dashSample) float64 { return s.chunks }), "#36b9cc"),   // info
 		DiskUsed:     sparklineSVG(series(func(s dashSample) float64 { return s.diskUsed }), "#f6c23e"), // warning
-		EcShards:     sparklineSVG(series(func(s dashSample) float64 { return s.ecShards }), "#5a5c69"), // dark
+		EcShards:     sparklineSVG(series(func(s dashSample) float64 { return s.ecShards }), "#9a9aa3"), // muted, readable on the dark theme
 		Tasks:        sparklineSVG(tasks, "#36b9cc"),
 		TasksValue:   trendCount(last(tasks)),
-		Workers:      sparklineSVG(workers, "#4e73df"),
+		Workers:      sparklineSVG(workers, "#e7e7ea"), // SeedeXR primary (white)
 		WorkersValue: trendCount(last(workers)),
 	}
 }

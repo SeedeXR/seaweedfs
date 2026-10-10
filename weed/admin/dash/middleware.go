@@ -44,12 +44,11 @@ func validateSession(store sessions.Store, w http.ResponseWriter, r *http.Reques
 		return "", "", "", &sessionValidationError{kind: sessionValidationErrorKindSessionInit, err: err}
 	}
 
-	authenticated, _ := session.Values["authenticated"].(bool)
-	username, _ := session.Values["username"].(string)
-	role, _ := session.Values["role"].(string)
-	if !authenticated || username == "" {
+	if !SessionIsAuthenticated(session) {
 		return "", "", "", &sessionValidationError{kind: sessionValidationErrorKindUnauthenticated}
 	}
+	username, _ := session.Values["username"].(string)
+	role, _ := session.Values["role"].(string)
 
 	csrfToken, err := getOrCreateSessionCSRFToken(session, r, w)
 	if err != nil {

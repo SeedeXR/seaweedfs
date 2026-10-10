@@ -1,0 +1,27 @@
+# Test-only overlay: puts Traefik v3 (Coolify's proxy) in front of the stack,
+# terminating TLS like production. Used by run.sh; never deploy this file.
+services:
+  seaweedfs:
+    # One image for every test project (the restore check boots a second one).
+    image: seedexr-seaweedfs-test:latest
+  traefik:
+    image: traefik:v3.6
+    command:
+      - --providers.file.filename=/etc/traefik/dynamic.yml
+      - --entrypoints.s3.address=:8443
+      - --entrypoints.admin.address=:9443
+      # Plain HTTP admin for browser screenshots (no trusted cert locally).
+      - --entrypoints.adminhttp.address=:9080
+      # Coolify's proxy does not cap request bodies; neither does this one.
+      - --entrypoints.s3.transport.respondingTimeouts.readTimeout=0
+      - --accesslog=true
+      - --log.level=INFO
+    ports:
+      - "127.0.0.1:${TEST_S3_PORT:-18443}:8443"
+      - "127.0.0.1:${TEST_ADMIN_PORT:-19443}:9443"
+      - "127.0.0.1:${TEST_ADMIN_HTTP_PORT:-19080}:9080"
+    volumes:
+      - ./test/traefik-dynamic.yml:/etc/traefik/dynamic.yml:ro
+    depends_on:
+      seaweedfs:
+        condition: service_healthy

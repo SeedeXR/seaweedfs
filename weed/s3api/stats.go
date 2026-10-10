@@ -5,8 +5,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/seaweedfs/seaweedfs/weed/util/version"
-
 	"github.com/seaweedfs/seaweedfs/weed/glog"
 	"github.com/seaweedfs/seaweedfs/weed/s3api/s3_constants"
 	"github.com/seaweedfs/seaweedfs/weed/s3api/s3err"
@@ -20,7 +18,7 @@ func track(f http.HandlerFunc, action string) http.HandlerFunc {
 		defer inFlightGauge.Dec()
 
 		bucket, _ := s3_constants.GetBucketAndObject(r)
-		w.Header().Set("Server", "SeaweedFS "+version.VERSION)
+		setSecurityHeaders(w, r)
 		recorder := stats_collect.NewStatusResponseWriter(w)
 		// Attach an audit-tracking flag to the request so handlers that call
 		// PostLog directly mark it; we emit a fallback entry afterward for

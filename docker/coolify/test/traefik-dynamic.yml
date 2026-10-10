@@ -1,0 +1,25 @@
+http:
+  routers:
+    s3:
+      entryPoints: [s3]
+      rule: PathPrefix(`/`)
+      service: s3
+      tls: {}
+    admin:
+      entryPoints: [admin]
+      rule: PathPrefix(`/`)
+      service: admin
+      tls: {}
+    admin-http:
+      entryPoints: [adminhttp]
+      rule: PathPrefix(`/`)
+      service: admin
+  services:
+    s3:
+      loadBalancer:
+        servers:
+          - url: http://seaweedfs:8333
+    admin:
+      loadBalancer:
+        servers:
+          - url: http://seaweedfs:23646

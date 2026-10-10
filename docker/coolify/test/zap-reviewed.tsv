@@ -1,0 +1,8 @@
+# ZAP alerts reviewed by hand and confirmed not exploitable. security_scan.sh
+# still prints them, but they do not fail the scan. One line per finding:
+# <plugin id> TAB <regex matched against the alert URL> TAB <param or *> TAB <why>
+# Keep entries narrow (exact rule, URL and param) so a new finding still fails.
+40012	/files\?	path	Reflected only in escaped HTML text and as a templ-JSON-encoded string argument (double quotes become backslash-quote, angle brackets become backslash-u003c/u003e escapes); the handler only builds a relative URL with encodeURIComponent. Verified with breakout payloads 2026-10-10.
+40012	/files\?	lastFileName	Same as path: JSON-encoded string argument, sink is encodeURIComponent into a same-origin URL.
+40040	:8443	*	S3 answers Access-Control-Allow-Origin: * without credentials on purpose: public media must load from any customer origin through a shared CDN; private data is 403 regardless.
+40018	:9443/	*	Admin handlers build no SQL. The only SQL in the binary is the optional MySQL/Postgres filer metadata stores (weed/filer/abstract_sql), which bind every value with ? placeholders and format only S3-validated bucket names; this deployment uses the leveldb2 store. ZAP's boolean-based differences come from timestamps and CSRF tokens. Verified 2026-10-10.

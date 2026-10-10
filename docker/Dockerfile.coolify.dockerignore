@@ -1,0 +1,11 @@
+# Whitelist: the image build only needs the Go module and the two docker files.
+*
+!go.mod
+!go.sum
+!weed
+!telemetry/proto
+!docker/entrypoint.sh
+!docker/filer.toml
+!docker/coolify/start.sh
+**/*_test.go
+**/testdata

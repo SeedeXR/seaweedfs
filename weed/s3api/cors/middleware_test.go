@@ -61,7 +61,7 @@ func TestMiddlewareFallbackConfig(t *testing.T) {
 			requestMethod:        "GET",
 			isOptions:            false,
 			expectedStatus:       http.StatusOK,
-			expectedOriginHeader: "https://example.com",
+			expectedOriginHeader: "*",
 			description:          "Should use fallback global config when no bucket config exists",
 		},
 		{
@@ -361,13 +361,13 @@ func TestMiddlewareFallbackWithError(t *testing.T) {
 		{
 			name:                 "ErrNoSuchBucket should trigger fallback",
 			errCode:              s3err.ErrNoSuchBucket,
-			expectedOriginHeader: "https://example.com",
+			expectedOriginHeader: "*",
 			description:          "Bucket not found errors should expose CORS headers to prevent information disclosure",
 		},
 		{
 			name:                 "ErrNoSuchCORSConfiguration should trigger fallback",
 			errCode:              s3err.ErrNoSuchCORSConfiguration,
-			expectedOriginHeader: "https://example.com",
+			expectedOriginHeader: "*",
 			description:          "Explicit no CORS config should use fallback",
 		},
 	}

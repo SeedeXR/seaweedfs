@@ -185,6 +185,7 @@ func NewS3ApiServerWithStore(router *mux.Router, option *S3ApiServerOption, expl
 	readExpiresAfterSec := v.GetInt("jwt.filer_signing.read.expires_after_seconds")
 
 	v.SetDefault("cors.allowed_origins.values", "*")
+	s3ContentSecurityPolicy = v.GetString("s3.content_security_policy")
 
 	if len(option.AllowedOrigins) == 0 {
 		allowedOrigins := v.GetString("cors.allowed_origins.values")
@@ -724,7 +725,11 @@ func (s3a *S3ApiServer) handleCORSOriginValidation(w http.ResponseWriter, r *htt
 	w.Header().Set("Access-Control-Expose-Headers", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "*")
 	w.Header().Set("Access-Control-Allow-Headers", "*")
-	w.Header().Set("Access-Control-Allow-Credentials", "true")
+	// Credentials are only meaningful for a specific origin; browsers reject
+	// them alongside "*".
+	if origin != "*" && origin != "" {
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
+	}
 	return true
 }
 
@@ -896,8 +901,11 @@ func (s3a *S3ApiServer) registerRouter(router *mux.Router) {
 		bucket.Methods(http.MethodDelete).Path(objectPath).HandlerFunc(track(s3a.iam.Auth(s3a.cb.Limit(s3a.AbortMultipartUploadHandler, ACTION_WRITE)), "DELETE")).Queries("uploadId", "{uploadId:.*}")
 		// ListObjectParts
 		bucket.Methods(http.MethodGet).Path(objectPath).HandlerFunc(track(s3a.iam.Auth(s3a.cb.Limit(s3a.ListObjectPartsHandler, ACTION_READ)), "GET")).Queries("uploadId", "{uploadId:.*}")
-		// ListMultipartUploads
-		bucket.Methods(http.MethodGet).HandlerFunc(track(s3a.iam.Auth(s3a.cb.Limit(s3a.ListMultipartUploadsHandler, ACTION_READ)), "GET")).Queries("uploads", "")
+		// ListMultipartUploads enumerates in-flight object keys, so it is a
+		// listing (s3:ListBucketMultipartUploads), not a read: an identity
+		// that may only GET objects, such as anonymous public-read, must not
+		// be able to discover keys through it.
+		bucket.Methods(http.MethodGet).HandlerFunc(track(s3a.iam.Auth(s3a.cb.Limit(s3a.ListMultipartUploadsHandler, ACTION_LIST)), "LIST")).Queries("uploads", "")
 
 		// GetObjectAttributes
 		bucket.Methods(http.MethodGet).Path(objectPath).HandlerFunc(track(s3a.iam.Auth(s3a.cb.Limit(s3a.GetObjectAttributesHandler, ACTION_READ)), "GET")).Queries("attributes", "")

@@ -3,7 +3,6 @@ package weed_server
 import (
 	"context"
 	"fmt"
-	"net"
 
 	"github.com/hashicorp/raft"
 	goraft "github.com/seaweedfs/raft"
@@ -32,17 +31,8 @@ func (ms *MasterServer) checkGrpcAdminAuth(ctx context.Context) error {
 		glog.V(0).Infof("gRPC raft admin auth failed: no peer info")
 		return status.Error(codes.PermissionDenied, "no peer info")
 	}
-	addr := pr.Addr.String()
-	var host string
-	if tcpAddr, ok := pr.Addr.(*net.TCPAddr); ok {
-		host = tcpAddr.IP.String()
-	} else if h, _, splitErr := net.SplitHostPort(addr); splitErr == nil {
-		host = h
-	} else {
-		host = addr
-	}
-	if !ms.guard.IsWhiteListed(host) {
-		glog.V(0).Infof("gRPC raft admin auth failed: %s is not whitelisted (remote: %s)", host, addr)
+	if allowed, host := ms.guard.IsWhiteListedPeer(pr.Addr); !allowed {
+		glog.V(0).Infof("gRPC raft admin auth failed: %s is not whitelisted (remote: %s)", host, pr.Addr)
 		return status.Errorf(codes.PermissionDenied, "not authorized: %s", host)
 	}
 	return nil

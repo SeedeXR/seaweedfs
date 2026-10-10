@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net"
 	"path/filepath"
 	"strings"
 	"time"
@@ -34,12 +33,8 @@ import (
 // checkGrpcAdminAuth verifies the gRPC caller is authorized for destructive
 // admin operations by checking the peer address against the guard's whitelist.
 //
-// IP extraction prefers a typed *net.TCPAddr where available, falling back to
-// SplitHostPort on the string form, then to the raw string. The fallback
-// chain matters because in-process/passthrough connections used in tests
-// surface as unparseable strings like "@"; with an empty whitelist the
-// allow-all branch in IsWhiteListed accepts them, with a whitelist they're
-// denied as expected.
+// Peers on the local Unix sockets that mini and `weed server` use between
+// their own components are always allowed; see Guard.IsWhiteListedPeer.
 //
 // Failed authorization attempts are logged so an operator running with a
 // configured whitelist can spot misconfigured callers and probe attempts.
@@ -54,17 +49,8 @@ func (vs *VolumeServer) checkGrpcAdminAuth(ctx context.Context) error {
 		glog.V(0).Infof("gRPC admin auth failed: no peer info")
 		return status.Error(codes.PermissionDenied, "no peer info")
 	}
-	addr := pr.Addr.String()
-	var host string
-	if tcpAddr, ok := pr.Addr.(*net.TCPAddr); ok {
-		host = tcpAddr.IP.String()
-	} else if h, _, splitErr := net.SplitHostPort(addr); splitErr == nil {
-		host = h
-	} else {
-		host = addr
-	}
-	if !vs.guard.IsWhiteListed(host) {
-		glog.V(0).Infof("gRPC admin auth failed: %s is not whitelisted (remote: %s)", host, addr)
+	if allowed, host := vs.guard.IsWhiteListedPeer(pr.Addr); !allowed {
+		glog.V(0).Infof("gRPC admin auth failed: %s is not whitelisted (remote: %s)", host, pr.Addr)
 		return status.Errorf(codes.PermissionDenied, "not authorized: %s", host)
 	}
 	return nil

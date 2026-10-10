@@ -191,3 +191,27 @@ func (g *Guard) UpdateWhiteList(whiteList []string) {
 	next.whiteListCIDR = whiteListCIDR
 	g.state.Store(&next)
 }
+
+// IsWhiteListedPeer decides whether a gRPC caller at addr may run guarded
+// admin RPCs, and returns the host it judged for logging. A Unix domain
+// socket peer is the local host by construction: only processes that can
+// open the socket file connect over it, and `weed mini` / `weed server` route
+// their own component-to-component calls through such sockets. Such peers
+// carry no IP (they stringify as "@"), so matching them against the IP
+// whitelist would reject the cluster's own volume allocation and vacuum
+// calls. TCP peers are matched against the whitelist as before.
+func (g *Guard) IsWhiteListedPeer(addr net.Addr) (bool, string) {
+	switch a := addr.(type) {
+	case *net.UnixAddr:
+		return true, "unix:" + a.Name
+	case *net.TCPAddr:
+		host := a.IP.String()
+		return g.IsWhiteListed(host), host
+	}
+	s := addr.String()
+	host := s
+	if h, _, err := net.SplitHostPort(s); err == nil {
+		host = h
+	}
+	return g.IsWhiteListed(host), host
+}

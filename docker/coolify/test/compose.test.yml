@@ -12,8 +12,9 @@ services:
       - --entrypoints.admin.address=:9443
       # Plain HTTP admin for browser screenshots (no trusted cert locally).
       - --entrypoints.adminhttp.address=:9080
-      # Coolify's proxy does not cap request bodies; neither does this one.
-      - --entrypoints.s3.transport.respondingTimeouts.readTimeout=0
+      # Traefik's default 60s read timeout cuts long uploads with a 502. The
+      # README tells operators to raise it on Coolify's proxy; mirror that here.
+      - --entrypoints.s3.transport.respondingTimeouts.readTimeout=3600s
       - --accesslog=true
       - --log.level=INFO
     ports:

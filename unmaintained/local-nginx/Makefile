@@ -9,7 +9,11 @@ PWD := $(shell pwd)
 logs:
 	mkdir -p logs
 
-start: logs
+# The TLS key is generated locally, never committed.
+key.pem cert.pem:
+	sh gen_certs.sh
+
+start: logs key.pem
 	nginx -p $(PWD) -c nginx.conf
 
 stop:

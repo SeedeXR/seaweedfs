@@ -58,7 +58,7 @@ Coolify generates these secrets, and they don't change on redeploy:
 | `ADMIN_USER` | `admin` | Admin UI user name |
 | `GOMEMLIMIT` | empty | Soft heap cap for the Go GC. Set it to about 90% of the container memory limit, e.g. `900MiB` for 1 GiB |
 | `GRPC_MTLS` | `on` | Mutual TLS on the internal gRPC ports. Set it to `off` only if an external `weed shell` or worker must connect |
-| `S3_CONTENT_SECURITY_POLICY` | a sandbox policy | CSP sent with every S3 response. An uploaded `.html` or `.svg` opened directly can't run script on your domain. Images, video, `fetch()` and model loaders aren't affected. Set it to an empty value only if you host a website from a bucket |
+| `S3_CONTENT_SECURITY_POLICY` | a sandbox policy | CSP sent with every S3 response. An uploaded `.html` or `.svg` opened directly can't run script on your domain. Images, video, `fetch()` and model loaders aren't affected. Empty uses the built-in sandbox policy. Set it to `off` only if you host a website from a bucket |
 
 For the Njozi app, set:
 

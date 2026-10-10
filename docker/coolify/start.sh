@@ -10,6 +10,7 @@
 #   S3_APP_ACCESS_KEY / S3_APP_SECRET_KEY       scoped app identity     (optional, both or neither)
 #   S3_APP_BUCKETS                              buckets the app identity may read, write, list
 #   S3_PUBLIC_READ_BUCKETS                      buckets anyone may GET (never List)
+#   S3_CONTENT_SECURITY_POLICY                  CSP on S3 responses (empty: sandbox default, off: none)
 set -eu
 set -f # bucket lists are split on commas below; never glob them
 
@@ -125,6 +126,17 @@ fi
 if [ -z "${S3_BUCKET:-}" ] && [ -n "${S3_APP_BUCKETS:-}" ]; then
   export S3_BUCKET="$S3_APP_BUCKETS"
 fi
+
+# Objects opened directly as pages (an uploaded .html or .svg) run in a
+# sandbox with no script, so stored files cannot phish or script on the S3
+# hostname; <img>, <video>, fetch() and model loaders are unaffected. The
+# default lives here, not in the compose file, because Coolify writes ' as \'
+# into env values, and \'none\' is not a CSP keyword: undo that escaping too.
+default_csp="sandbox; default-src 'none'; img-src 'self' data:; media-src 'self'; frame-ancestors 'none'"
+csp=$(printf '%s' "${S3_CONTENT_SECURITY_POLICY:-$default_csp}" | sed "s/\\\\'/'/g")
+[ "$csp" != off ] || csp=
+export WEED_S3_CONTENT_SECURITY_POLICY="$csp"
+log "S3 Content-Security-Policy: ${csp:-off}"
 
 log "starting: $*"
 exec "$NEXT_ENTRYPOINT" "$@"

@@ -65,11 +65,9 @@ services:
       - WEED_JWT_SIGNING_READ_KEY=${SERVICE_HEX_64_JWTREAD}
       - WEED_JWT_FILER_SIGNING_KEY=${SERVICE_HEX_64_FILERWRITE}
       - WEED_JWT_FILER_SIGNING_READ_KEY=${SERVICE_HEX_64_FILERREAD}
-      # Objects opened directly as pages (an uploaded .html or .svg) run in a
-      # sandbox with no script, so stored files cannot phish or script on
-      # your S3/media hostname. <img>, <video>, fetch() and model loaders are
-      # unaffected. Empty it if you host a website from a bucket.
-      - "WEED_S3_CONTENT_SECURITY_POLICY=${S3_CONTENT_SECURITY_POLICY-sandbox; default-src 'none'; img-src 'self' data:; media-src 'self'; frame-ancestors 'none'}"
+      # Empty means start.sh's sandbox policy; "off" disables it. The default
+      # lives in start.sh because Coolify escapes ' as \' in env values.
+      - S3_CONTENT_SECURITY_POLICY=${S3_CONTENT_SECURITY_POLICY:-}
       # The public S3 URL, e.g. https://s3.example.com (no port). Optional:
       # signatures verify from the proxy's forwarded headers without it. Not
       # derived from SERVICE_URL_*, which can be Coolify's generated http domain

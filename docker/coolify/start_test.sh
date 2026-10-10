@@ -13,6 +13,7 @@ cat > "$tmp/next.sh" <<'EOF'
 #!/bin/sh
 echo "ARGS=$*"
 echo "S3_BUCKET=${S3_BUCKET:-}"
+echo "CSP=${WEED_S3_CONTENT_SECURITY_POLICY-unset}"
 env | grep '^WEED_GRPC_' | sort
 EOF
 chmod +x "$tmp/next.sh"
@@ -97,6 +98,18 @@ if command -v openssl > /dev/null && openssl version | grep -q '^OpenSSL 3'; the
 else
   echo "skipping mTLS test: OpenSSL 3 not available"
 fi
+
+# S3 Content-Security-Policy: sandbox default, Coolify's \' escaping undone, "off" disables.
+default_csp="sandbox; default-src 'none'; img-src 'self' data:; media-src 'self'; frame-ancestors 'none'"
+# shellcheck disable=SC2086
+{
+  run $base
+  grep -qxF "CSP=$default_csp" "$tmp/out" || fail "empty S3_CONTENT_SECURITY_POLICY must give the sandbox default: $(grep '^CSP=' "$tmp/out")"
+  run $base S3_CONTENT_SECURITY_POLICY="default-src \\'self\\'"
+  grep -qxF "CSP=default-src 'self'" "$tmp/out" || fail "Coolify-escaped quotes must be unescaped: $(grep '^CSP=' "$tmp/out")"
+  run $base S3_CONTENT_SECURITY_POLICY=off
+  grep -qxF "CSP=" "$tmp/out" || fail "off must disable the CSP: $(grep '^CSP=' "$tmp/out")"
+}
 
 if [ "$failures" -ne 0 ]; then
   echo "$failures failure(s)"

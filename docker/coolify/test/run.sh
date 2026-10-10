@@ -43,7 +43,9 @@ retry() {
 compose() {
   p=$1
   shift
-  docker compose -p "$p" --env-file "$work/test.env" \
+  # Coolify runs compose with --project-directory set to the Base Directory
+  # (the repo root), so relative paths resolve from there; mirror that here.
+  docker compose -p "$p" --env-file "$work/test.env" --project-directory "$repo" \
     -f "$coolify/docker-compose.yml" -f "$here/compose.test.yml" "$@"
 }
 
@@ -86,11 +88,6 @@ log "1/5 start.sh unit tests"
 retry 3 docker run --rm -v "$coolify:/t:ro" alpine:3.23 \
   sh -c 'apk add -q --no-cache "openssl~3.5" > /dev/null && sh /t/start_test.sh' >&2 || die "start.sh tests"
 
-if [ "${SKIP_BUILD:-0}" != "1" ]; then
-  log "2/5 building image"
-  retry 3 docker build -q -f "$repo/docker/Dockerfile.coolify" -t "$image" "$repo" > /dev/null || die "image build"
-fi
-
 cat > "$work/test.env" <<EOF
 SERVICE_USER_S3=$(rnd A-Za-z0-9 16)
 SERVICE_PASSWORD_64_S3=$(rnd A-Za-z0-9 64)
@@ -107,6 +104,13 @@ S3_PUBLIC_READ_BUCKETS=njozi-media
 EOF
 # shellcheck disable=SC1091
 . "$work/test.env"
+
+if [ "${SKIP_BUILD:-0}" != "1" ]; then
+  # Through compose, as Coolify builds it, so the build context resolves the
+  # same way it does there.
+  log "2/5 building image"
+  retry 3 compose "$project" build --quiet seaweedfs > /dev/null || die "image build"
+fi
 
 log "3/5 starting stack behind Traefik"
 # Both projects bind the same test ports; a stack left by KEEP=1 would

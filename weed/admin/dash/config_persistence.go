@@ -220,69 +220,6 @@ func (cp *ConfigPersistence) ListConfigFiles() ([]string, error) {
 	return configFiles, nil
 }
 
-// BackupConfig creates a backup of a configuration file
-func (cp *ConfigPersistence) BackupConfig(filename string) error {
-	if cp.dataDir == "" {
-		return fmt.Errorf("no data directory specified")
-	}
-
-	configPath := cp.GetConfigPath(filename)
-	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		return fmt.Errorf("config file does not exist: %s", filename)
-	}
-
-	// Create backup filename with timestamp
-	timestamp := time.Now().Format("2006-01-02_15-04-05")
-	backupName := fmt.Sprintf("%s.backup_%s", filename, timestamp)
-
-	// Determine backup directory (conf subdirectory)
-	confDir := filepath.Join(cp.dataDir, ConfigSubdir)
-	backupPath := filepath.Join(confDir, backupName)
-
-	// Copy file
-	configData, err := os.ReadFile(configPath)
-	if err != nil {
-		return fmt.Errorf("failed to read config file: %w", err)
-	}
-
-	if err := os.WriteFile(backupPath, configData, ConfigFilePermissions); err != nil {
-		return fmt.Errorf("failed to create backup: %w", err)
-	}
-
-	glog.V(1).Infof("Created backup of %s as %s", filename, backupName)
-	return nil
-}
-
-// RestoreConfig restores a configuration file from a backup
-func (cp *ConfigPersistence) RestoreConfig(filename, backupName string) error {
-	if cp.dataDir == "" {
-		return fmt.Errorf("no data directory specified")
-	}
-
-	// Determine backup path (conf subdirectory)
-	confDir := filepath.Join(cp.dataDir, ConfigSubdir)
-	backupPath := filepath.Join(confDir, backupName)
-
-	if _, err := os.Stat(backupPath); os.IsNotExist(err) {
-		return fmt.Errorf("backup file does not exist: %s", backupName)
-	}
-
-	// Read backup file
-	backupData, err := os.ReadFile(backupPath)
-	if err != nil {
-		return fmt.Errorf("failed to read backup file: %w", err)
-	}
-
-	// Write to config file
-	configPath := cp.GetConfigPath(filename)
-	if err := os.WriteFile(configPath, backupData, ConfigFilePermissions); err != nil {
-		return fmt.Errorf("failed to restore config: %w", err)
-	}
-
-	glog.V(1).Infof("Restored %s from backup %s", filename, backupName)
-	return nil
-}
-
 // Default task policies. These derive from each task's own NewDefaultConfig() so that a
 // task type has exactly one definition of its defaults. They used to be hand-written copies
 // here, and had drifted from the values the tasks themselves and the admin UI schema use:

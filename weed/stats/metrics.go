@@ -1141,8 +1141,16 @@ func StartMetricsServer(ip string, port int) {
 	if port == 0 {
 		return
 	}
-	http.Handle("/metrics", promhttp.HandlerFor(Gather, promhttp.HandlerOpts{}))
-	glog.Fatal(http.ListenAndServe(JoinHostPort(ip, port), nil))
+	glog.Fatal(http.ListenAndServe(JoinHostPort(ip, port), metricsHandler()))
+}
+
+// metricsHandler serves only /metrics. It must not be http.DefaultServeMux:
+// importing net/http/pprof registers /debug/pprof there, which would expose
+// heap and goroutine dumps on the metrics port.
+func metricsHandler() http.Handler {
+	mux := http.NewServeMux()
+	mux.Handle("/metrics", promhttp.HandlerFor(Gather, promhttp.HandlerOpts{}))
+	return mux
 }
 
 func SourceName(port uint32) string {

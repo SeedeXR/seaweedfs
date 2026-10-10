@@ -87,7 +87,7 @@ func (h *FileBrowserHandlers) downloadFileGrpc(ctx context.Context, filePath str
 	// Only inline images and PDFs; serve the rest as attachments so a hostile upload
 	// (HTML, SVG) can't run as same-origin script. nosniff locks the declared type.
 	disposition := "attachment"
-	if inline && (strings.HasPrefix(contentType, "image/") || contentType == "application/pdf") {
+	if inline && inlinePreviewAllowed(contentType) {
 		disposition = "inline"
 	}
 	w.Header().Set("Content-Disposition", mime.FormatMediaType(disposition, map[string]string{"filename": fileName}))
@@ -266,4 +266,15 @@ func (h *FileBrowserHandlers) streamEntryContent(ctx context.Context, entry *fil
 		return fmt.Errorf("prepare stream: %w", err)
 	}
 	return streamFn(w)
+}
+
+// inlinePreviewAllowed reports whether a stored file may render inline in the
+// admin origin. Raster images and PDFs cannot run script; SVG is an image type
+// that can, so it is always served as an attachment. contentType is already
+// normalized by dash.ResolveEntryMime.
+func inlinePreviewAllowed(contentType string) bool {
+	if contentType == "image/svg+xml" {
+		return false
+	}
+	return strings.HasPrefix(contentType, "image/") || contentType == "application/pdf"
 }

@@ -452,20 +452,23 @@ func startAdminServer(ctx context.Context, options AdminOptions, enableUI bool, 
 	if err != nil {
 		return fmt.Errorf("failed to get session key: %w", err)
 	}
-	store := sessions.NewCookieStore(authKey, encKey)
+	cookieStore := sessions.NewCookieStore(authKey, encKey)
 
 	// Configure session options to ensure cookies are properly saved
 	cookiePath := "/"
 	if urlPrefix != "" {
 		cookiePath = urlPrefix + "/"
 	}
-	store.Options = &sessions.Options{
+	cookieStore.Options = &sessions.Options{
 		Path:     cookiePath,
 		MaxAge:   3600 * 24,    // 24 hours
 		HttpOnly: true,         // Prevent JavaScript access
 		Secure:   cookieSecure, // Set based on actual TLS configuration
 		SameSite: http.SameSiteLaxMode,
 	}
+	// Behind a TLS-terminating proxy (Coolify/Traefik) the server itself
+	// speaks plain HTTP, so Secure is decided per request.
+	store := dash.NewProxyAwareStore(cookieStore)
 
 	// Static files - pre-gzipped and embedded in the binary
 	r.Handle("/static", http.RedirectHandler("/static/", http.StatusMovedPermanently))
@@ -536,7 +539,9 @@ func startAdminServer(ctx context.Context, options AdminOptions, enableUI bool, 
 	}
 	server := &http.Server{
 		Addr:    addr,
-		Handler: handler,
+		Handler: dash.SecurityHeaders(handler),
+		// Bounds how long a client may take to send headers (slowloris).
+		ReadHeaderTimeout: 10 * time.Second,
 	}
 
 	// Decide TLS configuration BEFORE launching the server goroutine, so a

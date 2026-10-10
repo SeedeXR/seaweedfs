@@ -3,6 +3,7 @@ package dash
 import (
 	"crypto/subtle"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/sessions"
 	"github.com/seaweedfs/seaweedfs/weed/glog"
@@ -29,6 +30,12 @@ func (s *AdminServer) HandleLogin(store sessions.Store, adminUser, adminPassword
 
 		if err := ValidateSessionCSRFToken(session, r); err != nil {
 			http.Redirect(w, r, prefix+"/login?error=Invalid CSRF token", http.StatusSeeOther)
+			return
+		}
+
+		if loginBlocked() {
+			glog.Warningf("admin login throttled after repeated failures, from %s", clientAddress(r))
+			http.Redirect(w, r, prefix+"/login?error=Too many failed attempts. Wait a minute and try again.", http.StatusSeeOther)
 			return
 		}
 
@@ -61,6 +68,12 @@ func (s *AdminServer) HandleLogin(store sessions.Store, adminUser, adminPassword
 				return
 			}
 			session.Values[sessionCSRFTokenKey] = csrfToken
+			sessionID, err := generateCSRFToken()
+			if err != nil {
+				http.Redirect(w, r, prefix+"/login?error=Unable to create session. Please try again or contact administrator.", http.StatusSeeOther)
+				return
+			}
+			session.Values[sessionIDKey] = sessionID
 			if err := session.Save(r, w); err != nil {
 				// Log the detailed error server-side for diagnostics.
 				glog.Errorf("Failed to save session for user %s: %v", loginUsername, err)
@@ -68,11 +81,14 @@ func (s *AdminServer) HandleLogin(store sessions.Store, adminUser, adminPassword
 				return
 			}
 
+			glog.Infof("admin login succeeded for user %q (role %s) from %s", loginUsername, role, clientAddress(r))
 			http.Redirect(w, r, prefix+"/admin", http.StatusSeeOther)
 			return
 		}
 
 		// Authentication failed.
+		recordLoginFailure()
+		glog.Warningf("admin login failed for user %q from %s", loginUsername, clientAddress(r))
 		http.Redirect(w, r, prefix+"/login?error=Invalid credentials", http.StatusSeeOther)
 	}
 }
@@ -84,6 +100,15 @@ func (s *AdminServer) HandleLogout(store sessions.Store, w http.ResponseWriter, 
 	if err != nil {
 		http.Redirect(w, r, prefix+"/login", http.StatusSeeOther)
 		return
+	}
+	if sid, _ := session.Values[sessionIDKey].(string); sid != "" {
+		lifetime := time.Duration(session.Options.MaxAge) * time.Second
+		if lifetime <= 0 {
+			lifetime = 24 * time.Hour
+		}
+		revokeSession(sid, time.Now().Add(lifetime))
+		username, _ := session.Values["username"].(string)
+		glog.Infof("admin logout for user %q from %s", username, clientAddress(r))
 	}
 	for key := range session.Values {
 		delete(session.Values, key)

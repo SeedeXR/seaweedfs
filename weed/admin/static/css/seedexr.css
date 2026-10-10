@@ -1,0 +1,425 @@
+/*
+ * SeedeXR dark theme for the admin UI. Loaded after bootstrap.min.css and
+ * admin.css, and scoped to [data-bs-theme=dark] so the stock light theme is
+ * untouched. Kept in its own file so upstream changes to admin.css still merge.
+ *
+ * The SeedeXR identity is monochrome: near-black surfaces, white type, white
+ * primary actions. Status colours (success, warning, danger, info) keep the
+ * muted palette from admin.css, because they carry meaning.
+ */
+
+[data-bs-theme=dark] {
+    --sx-black: #000000;
+    --sx-bg: #08080a;
+    --sx-surface: #111114;
+    --sx-raised: #17171b;
+    --sx-hover: #1f1f24;
+    --sx-border: #26262c;
+    --sx-text: #e7e7ea;
+    --sx-muted: #9a9aa3;
+    --sx-white: #f4f4f5;
+
+    --bs-body-bg: var(--sx-bg);
+    --bs-body-bg-rgb: 8, 8, 10;
+    --bs-body-color: var(--sx-text);
+    --bs-body-color-rgb: 231, 231, 234;
+    --bs-emphasis-color: #ffffff;
+    --bs-secondary-color: var(--sx-muted);
+    --bs-secondary-bg: var(--sx-raised);
+    --bs-tertiary-bg: var(--sx-surface);
+    --bs-tertiary-bg-rgb: 17, 17, 20;
+    --bs-border-color: var(--sx-border);
+    --bs-heading-color: #ffffff;
+    --bs-primary: var(--sx-white);
+    --bs-primary-rgb: 244, 244, 245;
+    --bs-primary-text-emphasis: #ffffff;
+    --bs-primary-bg-subtle: var(--sx-hover);
+    --bs-primary-border-subtle: #3a3a42;
+    --bs-link-color: var(--sx-white);
+    --bs-link-color-rgb: 244, 244, 245;
+    --bs-link-hover-color: #ffffff;
+    --bs-link-hover-color-rgb: 255, 255, 255;
+    --bs-focus-ring-color: rgba(244, 244, 245, 0.25);
+    --bs-font-sans-serif: "Inter", "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
+    color-scheme: dark;
+}
+
+[data-bs-theme=dark] body {
+    background-color: var(--sx-bg);
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Links: white instead of admin.css's muted blue. :where() keeps the
+   specificity of a bare `a`, so .btn, .nav-link and friends still win. */
+:where([data-bs-theme=dark]) a {
+    color: var(--sx-white);
+}
+
+:where([data-bs-theme=dark]) a:hover {
+    color: #ffffff;
+}
+
+/* Navbar: solid black with the SeedeXR lockup. */
+[data-bs-theme=dark] .navbar.bg-primary {
+    background-color: var(--sx-black) !important;
+    border-bottom: 1px solid var(--sx-border);
+}
+
+.sx-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: #ffffff !important;
+}
+
+.sx-brand img {
+    height: 30px;
+    width: auto;
+}
+
+.sx-wordmark {
+    font-weight: 500;
+    font-size: 0.95rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+}
+
+.sx-wordmark small {
+    color: var(--sx-muted, #9a9aa3);
+    font-size: 0.7rem;
+    letter-spacing: 0.18em;
+    margin-left: 0.5rem;
+}
+
+/* Sidebar */
+[data-bs-theme=dark] .sidebar,
+[data-bs-theme=dark] .sidebar.bg-light {
+    background-color: var(--sx-surface) !important;
+    box-shadow: inset -1px 0 0 var(--sx-border);
+}
+
+[data-bs-theme=dark] .sidebar-heading {
+    color: var(--sx-muted) !important;
+    letter-spacing: 0.14em;
+}
+
+[data-bs-theme=dark] .sidebar .nav-link {
+    color: var(--sx-text);
+    border-radius: 0.375rem;
+    margin: 0 0.5rem;
+}
+
+[data-bs-theme=dark] .sidebar .nav-link:hover,
+[data-bs-theme=dark] .nav .nav .nav-link:hover {
+    color: #ffffff;
+    background-color: var(--sx-hover);
+}
+
+[data-bs-theme=dark] .sidebar .nav-link.active,
+[data-bs-theme=dark] .nav-link[data-bs-toggle="collapse"]:not(.collapsed),
+[data-bs-theme=dark] .nav-link[data-bs-toggle="collapse"]:not(.collapsed) .bi-chevron-down {
+    color: #ffffff;
+}
+
+[data-bs-theme=dark] .sidebar .nav-link.active {
+    background-color: var(--sx-hover);
+    box-shadow: inset 2px 0 0 var(--sx-white);
+}
+
+[data-bs-theme=dark] .nav .nav {
+    border-left-color: var(--sx-border);
+}
+
+/* Surfaces that admin.css and the templates hard-code as light. */
+[data-bs-theme=dark] .bg-light,
+[data-bs-theme=dark] .bg-white {
+    background-color: var(--sx-raised) !important;
+}
+
+[data-bs-theme=dark] .footer.bg-light {
+    background-color: var(--sx-bg) !important;
+    border-top: 1px solid var(--sx-border);
+}
+
+/* text-dark stays dark only where it sits on a light status colour. */
+[data-bs-theme=dark] .text-dark:not(.bg-warning):not(.bg-info):not(.text-bg-warning):not(.text-bg-info) {
+    color: var(--sx-text) !important;
+}
+
+[data-bs-theme=dark] .text-muted {
+    color: var(--sx-muted) !important;
+}
+
+[data-bs-theme=dark] .text-gray-800 {
+    color: var(--sx-text) !important;
+}
+
+[data-bs-theme=dark] .text-gray-300 {
+    color: #4a4a52 !important;
+}
+
+/* Cards */
+[data-bs-theme=dark] .card {
+    background-color: var(--sx-surface);
+    border: 1px solid var(--sx-border);
+    box-shadow: none !important;
+}
+
+[data-bs-theme=dark] .card-header,
+[data-bs-theme=dark] .card-footer {
+    background-color: var(--sx-raised);
+    border-color: var(--sx-border);
+}
+
+[data-bs-theme=dark] .shadow {
+    box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.6) !important;
+}
+
+/* Tables */
+[data-bs-theme=dark] .table {
+    --bs-table-color: var(--sx-text);
+    --bs-table-bg: transparent;
+    --bs-table-border-color: var(--sx-border);
+    --bs-table-striped-bg: rgba(255, 255, 255, 0.025);
+    --bs-table-hover-bg: rgba(255, 255, 255, 0.045);
+    --bs-table-hover-color: #ffffff;
+    color: var(--sx-text);
+}
+
+[data-bs-theme=dark] .table thead th,
+[data-bs-theme=dark] .table-light,
+[data-bs-theme=dark] .table-light > th,
+[data-bs-theme=dark] .table-light > td {
+    --bs-table-bg: var(--sx-raised);
+    --bs-table-color: var(--sx-muted);
+    --bs-table-border-color: var(--sx-border);
+    background-color: var(--sx-raised);
+    color: var(--sx-muted);
+    border-color: var(--sx-border);
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+[data-bs-theme=dark] .table-bordered,
+[data-bs-theme=dark] .table-bordered th,
+[data-bs-theme=dark] .table-bordered td {
+    border-color: var(--sx-border);
+}
+
+/* Primary actions: white on black, the brand's only accent. */
+[data-bs-theme=dark] .btn-primary {
+    --bs-btn-color: #000000;
+    --bs-btn-bg: var(--sx-white);
+    --bs-btn-border-color: var(--sx-white);
+    --bs-btn-hover-color: #000000;
+    --bs-btn-hover-bg: #d4d4d8;
+    --bs-btn-hover-border-color: #d4d4d8;
+    --bs-btn-active-color: #000000;
+    --bs-btn-active-bg: #bdbdc3;
+    --bs-btn-active-border-color: #bdbdc3;
+    --bs-btn-disabled-color: #000000;
+    --bs-btn-disabled-bg: #8a8a92;
+    --bs-btn-disabled-border-color: #8a8a92;
+    --bs-btn-focus-shadow-rgb: 244, 244, 245;
+    background-color: var(--bs-btn-bg);
+    border-color: var(--bs-btn-border-color);
+    font-weight: 500;
+}
+
+[data-bs-theme=dark] .btn-primary:hover {
+    background-color: var(--bs-btn-hover-bg);
+    border-color: var(--bs-btn-hover-border-color);
+}
+
+[data-bs-theme=dark] .btn-outline-primary {
+    --bs-btn-color: var(--sx-white);
+    --bs-btn-border-color: #4a4a52;
+    --bs-btn-hover-color: #000000;
+    --bs-btn-hover-bg: var(--sx-white);
+    --bs-btn-hover-border-color: var(--sx-white);
+    --bs-btn-active-color: #000000;
+    --bs-btn-active-bg: #d4d4d8;
+    --bs-btn-active-border-color: #d4d4d8;
+    --bs-btn-focus-shadow-rgb: 244, 244, 245;
+}
+
+[data-bs-theme=dark] .btn-outline-secondary {
+    --bs-btn-color: var(--sx-text);
+    --bs-btn-border-color: #3a3a42;
+    --bs-btn-hover-bg: var(--sx-hover);
+    --bs-btn-hover-border-color: #4a4a52;
+    --bs-btn-hover-color: #ffffff;
+}
+
+[data-bs-theme=dark] .btn-light {
+    --bs-btn-color: var(--sx-text);
+    --bs-btn-bg: var(--sx-raised);
+    --bs-btn-border-color: var(--sx-border);
+    --bs-btn-hover-bg: var(--sx-hover);
+    --bs-btn-hover-color: #ffffff;
+}
+
+/* bg-primary on badges and headers: a raised neutral, so white text keeps contrast. */
+[data-bs-theme=dark] .bg-primary:not(.navbar),
+[data-bs-theme=dark] .badge.bg-primary,
+[data-bs-theme=dark] .text-bg-primary {
+    background-color: #2c2c33 !important;
+    color: #ffffff !important;
+}
+
+[data-bs-theme=dark] .bg-secondary,
+[data-bs-theme=dark] .badge.bg-secondary {
+    background-color: #3a3a42 !important;
+}
+
+[data-bs-theme=dark] .text-primary {
+    color: #ffffff !important;
+}
+
+[data-bs-theme=dark] .border-primary {
+    border-color: var(--sx-white) !important;
+}
+
+[data-bs-theme=dark] .border-left-primary {
+    border-left-color: var(--sx-white) !important;
+}
+
+/* Progress */
+[data-bs-theme=dark] .progress {
+    --bs-progress-bg: var(--sx-raised);
+    background-color: var(--sx-raised);
+    border-color: var(--sx-border);
+}
+
+[data-bs-theme=dark] .progress-bar:not([class*="bg-"]) {
+    background-color: var(--sx-white);
+    color: #000000;
+}
+
+/* Navigation widgets */
+[data-bs-theme=dark] .nav-pills {
+    --bs-nav-pills-link-active-bg: var(--sx-white);
+    --bs-nav-pills-link-active-color: #000000;
+}
+
+[data-bs-theme=dark] .nav-tabs {
+    --bs-nav-tabs-link-active-bg: var(--sx-surface);
+    --bs-nav-tabs-link-active-color: #ffffff;
+    --bs-nav-tabs-border-color: var(--sx-border);
+    --bs-nav-tabs-link-active-border-color: var(--sx-border) var(--sx-border) var(--sx-surface);
+}
+
+[data-bs-theme=dark] .nav-link {
+    --bs-nav-link-color: var(--sx-text);
+    --bs-nav-link-hover-color: #ffffff;
+}
+
+[data-bs-theme=dark] .pagination {
+    --bs-pagination-color: var(--sx-text);
+    --bs-pagination-bg: var(--sx-surface);
+    --bs-pagination-border-color: var(--sx-border);
+    --bs-pagination-hover-color: #ffffff;
+    --bs-pagination-hover-bg: var(--sx-hover);
+    --bs-pagination-hover-border-color: var(--sx-border);
+    --bs-pagination-active-color: #000000;
+    --bs-pagination-active-bg: var(--sx-white);
+    --bs-pagination-active-border-color: var(--sx-white);
+    --bs-pagination-disabled-bg: var(--sx-bg);
+    --bs-pagination-disabled-border-color: var(--sx-border);
+}
+
+[data-bs-theme=dark] .dropdown-menu {
+    --bs-dropdown-bg: var(--sx-raised);
+    --bs-dropdown-border-color: var(--sx-border);
+    --bs-dropdown-link-hover-bg: var(--sx-hover);
+    --bs-dropdown-link-active-bg: var(--sx-white);
+    --bs-dropdown-link-active-color: #000000;
+}
+
+[data-bs-theme=dark] .modal-content {
+    background-color: var(--sx-surface);
+    border-color: var(--sx-border);
+}
+
+[data-bs-theme=dark] .list-group {
+    --bs-list-group-bg: var(--sx-surface);
+    --bs-list-group-border-color: var(--sx-border);
+    --bs-list-group-action-hover-bg: var(--sx-hover);
+    --bs-list-group-active-bg: var(--sx-white);
+    --bs-list-group-active-color: #000000;
+    --bs-list-group-active-border-color: var(--sx-white);
+}
+
+/* Forms */
+[data-bs-theme=dark] .form-control,
+[data-bs-theme=dark] .form-select {
+    background-color: var(--sx-bg);
+    border-color: #33333a;
+    color: var(--sx-text);
+}
+
+[data-bs-theme=dark] .form-control:focus,
+[data-bs-theme=dark] .form-select:focus {
+    border-color: #8a8a92;
+    box-shadow: 0 0 0 0.2rem rgba(244, 244, 245, 0.12);
+}
+
+[data-bs-theme=dark] .form-check-input:checked {
+    background-color: var(--sx-white);
+    border-color: var(--sx-white);
+}
+
+[data-bs-theme=dark] .form-check-input:checked[type=checkbox] {
+    --bs-form-check-bg-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23000' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='m6 10 3 3 6-6'/%3e%3c/svg%3e");
+}
+
+[data-bs-theme=dark] .form-switch .form-check-input:checked {
+    --bs-form-switch-bg: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23000'/%3e%3c/svg%3e");
+}
+
+[data-bs-theme=dark] .input-group-text {
+    background-color: var(--sx-raised);
+    border-color: #33333a;
+    color: var(--sx-muted);
+}
+
+[data-bs-theme=dark] pre,
+[data-bs-theme=dark] code {
+    color: #d4d4d8;
+}
+
+[data-bs-theme=dark] pre {
+    background-color: var(--sx-black);
+    border: 1px solid var(--sx-border);
+    border-radius: 0.375rem;
+    padding: 0.75rem;
+}
+
+[data-bs-theme=dark] ::selection {
+    background: var(--sx-white);
+    color: #000000;
+}
+
+/* Mobile sidebar overlay */
+@media (max-width: 767.98px) {
+    [data-bs-theme=dark] .sidebar {
+        background-color: var(--sx-surface) !important;
+    }
+}
+
+/* Login */
+.sx-login {
+    background:
+        radial-gradient(1200px 600px at 50% -10%, #1a1a1f 0%, transparent 60%),
+        var(--sx-bg, #08080a);
+}
+
+.sx-login .card {
+    background-color: rgba(17, 17, 20, 0.92);
+}
+
+.sx-login-logo {
+    width: 132px;
+    height: auto;
+}

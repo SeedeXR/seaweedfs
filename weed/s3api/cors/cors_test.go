@@ -420,8 +420,9 @@ func TestEvaluateRequest(t *testing.T) {
 				Origin: "http://other.com",
 				Method: "PUT",
 			},
+			// A "*" rule answers "*" (as AWS S3 does), not the caller's origin.
 			want: &CORSResponse{
-				AllowOrigin:  "http://other.com",
+				AllowOrigin:  "*",
 				AllowMethods: "PUT",
 			},
 			wantErr: false,
@@ -566,4 +567,27 @@ func TestApplyHeaders(t *testing.T) {
 
 func intPtr(i int) *int {
 	return &i
+}
+
+// TestResponseOriginIsCacheSafe pins why "*" rules answer "*": a CDN that
+// ignores Vary: Origin caches one response for every caller.
+func TestResponseOriginIsCacheSafe(t *testing.T) {
+	wildcard := &CORSRule{AllowedOrigins: []string{"*"}}
+	mixed := &CORSRule{AllowedOrigins: []string{"https://app.example.com", "*"}}
+	pattern := &CORSRule{AllowedOrigins: []string{"https://*.example.com"}}
+	for _, tc := range []struct {
+		rule   *CORSRule
+		origin string
+		want   string
+	}{
+		{wildcard, "https://a.example", "*"},
+		{wildcard, "https://b.example", "*"},
+		{mixed, "https://app.example.com", "https://app.example.com"},
+		{mixed, "https://other.example", "*"},
+		{pattern, "https://tours.example.com", "https://tours.example.com"},
+	} {
+		if got := responseOrigin(tc.rule, tc.origin); got != tc.want {
+			t.Errorf("responseOrigin(%v, %q) = %q, want %q", tc.rule.AllowedOrigins, tc.origin, got, tc.want)
+		}
+	}
 }

@@ -121,7 +121,8 @@ func setCommonHeaders(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Access-Control-Allow-Methods", "*")
 				w.Header().Set("Access-Control-Allow-Headers", "*")
 				w.Header().Set("Access-Control-Expose-Headers", "*")
-				w.Header().Set("Access-Control-Allow-Credentials", "true")
+				// No Allow-Credentials: browsers reject it alongside "*", and S3
+				// authenticates with signatures, not cookies.
 			}
 		} else {
 			// Bucket-specific request - preserve existing CORS headers or set default

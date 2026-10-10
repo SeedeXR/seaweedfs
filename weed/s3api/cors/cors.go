@@ -190,7 +190,7 @@ func EvaluateRequest(config *CORSConfiguration, corsReq *CORSRequest) (*CORSResp
 // buildPreflightResponse builds a CORS response for preflight requests
 func buildPreflightResponse(rule *CORSRule, corsReq *CORSRequest) *CORSResponse {
 	response := &CORSResponse{
-		AllowOrigin: corsReq.Origin,
+		AllowOrigin: responseOrigin(rule, corsReq.Origin),
 	}
 
 	// Check if the requested method is allowed
@@ -250,7 +250,7 @@ func buildPreflightResponse(rule *CORSRule, corsReq *CORSRequest) *CORSResponse 
 // buildResponse builds a CORS response from a matching rule
 func buildResponse(rule *CORSRule, corsReq *CORSRequest) *CORSResponse {
 	response := &CORSResponse{
-		AllowOrigin: corsReq.Origin,
+		AllowOrigin: responseOrigin(rule, corsReq.Origin),
 	}
 
 	// Set allowed methods
@@ -275,6 +275,23 @@ func buildResponse(rule *CORSRule, corsReq *CORSRequest) *CORSResponse {
 }
 
 // Helper functions
+
+// responseOrigin is the Access-Control-Allow-Origin value for a request that
+// matched rule. Like AWS S3, a rule allowing "*" answers "*" unless it also
+// lists the origin exactly; only specific origins and patterns echo the
+// request's Origin. Echoing for "*" made the header vary per caller, so a
+// shared cache (a CDN that ignores Vary, such as Cloudflare's free plan) would
+// replay the first caller's origin to every other site and break their
+// cross-origin reads.
+func responseOrigin(rule *CORSRule, origin string) string {
+	if containsString(rule.AllowedOrigins, origin) {
+		return origin
+	}
+	if containsString(rule.AllowedOrigins, "*") {
+		return "*"
+	}
+	return origin
+}
 
 // matchesOrigin checks if the request origin matches any allowed origin
 func matchesOrigin(allowedOrigins []string, origin string) bool {

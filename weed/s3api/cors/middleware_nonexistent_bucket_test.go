@@ -37,7 +37,7 @@ func TestMiddlewareNonExistentBucket(t *testing.T) {
 			requestMethod:        "OPTIONS",
 			isOptions:            true,
 			expectedStatus:       http.StatusOK,
-			expectedOriginHeader: "https://example.com",
+			expectedOriginHeader: "*",
 			description:          "Preflight to non-existent bucket should succeed with CORS headers",
 		},
 		{
@@ -55,7 +55,7 @@ func TestMiddlewareNonExistentBucket(t *testing.T) {
 			requestMethod:        "GET",
 			isOptions:            false,
 			expectedStatus:       http.StatusNotFound, // Handler returns NoSuchBucket
-			expectedOriginHeader: "https://example.com",
+			expectedOriginHeader: "*",
 			description:          "GET to non-existent bucket should have CORS headers even with NoSuchBucket error",
 		},
 		{
@@ -119,7 +119,7 @@ func TestMiddlewareNonExistentBucket(t *testing.T) {
 			requestMethod:        "OPTIONS",
 			isOptions:            true,
 			expectedStatus:       http.StatusOK,
-			expectedOriginHeader: "https://mydomain.com",
+			expectedOriginHeader: "*",
 			description:          "Bucket listing preflight to non-existent bucket should have CORS headers (issue #8065)",
 		},
 	}
@@ -226,8 +226,8 @@ func TestMiddlewareConsistentBehavior(t *testing.T) {
 
 			// Both existing and non-existent buckets should return same CORS headers
 			actualOrigin := w.Header().Get("Access-Control-Allow-Origin")
-			if actualOrigin != "https://example.com" {
-				t.Errorf("%s: expected Access-Control-Allow-Origin='https://example.com', got '%s'",
+			if actualOrigin != "*" {
+				t.Errorf("%s: expected Access-Control-Allow-Origin='*', got '%s'",
 					tc.description, actualOrigin)
 			}
 

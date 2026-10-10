@@ -27,7 +27,7 @@ failed=0
 log() { echo "$(date -u +%H:%M:%S) scan: $*" >&2; }
 flag() { log "HIGH: $*"; failed=1; }
 
-docker inspect "$proxy" > /dev/null 2>&1 || { log "no running proxy $proxy"; exit 2; }
+[ "$(docker inspect -f '{{.State.Running}}' "$proxy" 2> /dev/null)" = true ] || { log "no running proxy $proxy"; exit 2; }
 env_of() { docker inspect -f '{{range .Config.Env}}{{println .}}{{end}}' "$project-seaweedfs-1" | sed -n "s/^$1=//p"; }
 
 log "trivy image $image"

@@ -1,5 +1,17 @@
 # SeaweedFS
 
+> **SeedeXR fork: deploy on Coolify**
+>
+> | Coolify field | Value |
+> |---|---|
+> | Build Pack | **Docker Compose** |
+> | Branch | `master` |
+> | Base Directory | `/` |
+> | Docker Compose Location | `/docker/coolify/docker-compose.yml` |
+>
+> Then click **Load compose**, set the domains on the `seaweedfs` service (`https://s3.example.com:8333`, plus `https://storage-admin.example.com:23646` for the admin UI), set `S3_APP_BUCKETS`, and deploy. Coolify generates every secret.
+> The full guide covers Cloudflare, backups, migration, monitoring and security: [docker/coolify/README.md](docker/coolify/README.md).
+
 
 [![Slack](https://img.shields.io/badge/slack-purple)](https://join.slack.com/t/seaweedfs/shared_invite/enQtMzI4MTMwMjU2MzA3LTEyYzZmZWYzOGQ3MDJlZWMzYmI0OTE4OTJiZjJjODBmMzUxNmYwODg0YjY3MTNlMjBmZDQ1NzQ5NDJhZWI2ZmY)
 [![Twitter](https://img.shields.io/twitter/follow/seaweedfs.svg?style=social&label=Follow)](https://twitter.com/intent/follow?screen_name=seaweedfs)

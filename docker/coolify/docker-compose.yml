@@ -17,7 +17,7 @@ services:
       context: .
       dockerfile: docker/Dockerfile.coolify
       args:
-        # Coolify passes the git SHA when "Include Source Commit in Build" is on.
+        # Coolify passes the git SHA when Advanced -> "Source commit availability" is "Available during build".
         SOURCE_COMMIT: ${SOURCE_COMMIT:-}
     command:
       - mini

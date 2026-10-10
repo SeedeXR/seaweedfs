@@ -12,8 +12,17 @@ This deploys SeaweedFS as one `weed mini` process on one persistent volume. That
 
 ## Deploy
 
-1. In Coolify, go to **New Resource → Git repository**. Pick this repo and the branch, then choose the **Docker Compose** build pack.
-2. Set **Base Directory** to `/` and **Docker Compose Location** to `/docker/coolify/docker-compose.yml`.
+1. In Coolify, add a new resource from this Git repository (as a public repository or through your GitHub App), and set:
+
+   | Field | Value |
+   |---|---|
+   | Build Pack | **Docker Compose** |
+   | Branch | `master` |
+   | Base Directory | `/` |
+   | Docker Compose Location | `/docker/coolify/docker-compose.yml` |
+
+   Keep Base Directory at `/`. Coolify runs `docker compose --project-directory <checkout><Base Directory>`, so paths in the compose file, including the build context `.`, resolve from the repo root.
+2. Click **Load compose** (labelled **Reload compose** once loaded). A `seaweedfs` service appears, and the generated secrets appear under **Environment Variables**.
 3. Under **Domains** for the `seaweedfs` service, enter the hostnames with the container port:
    ```
    https://s3.example.com:8333,https://media.example.com:8333,https://storage-admin.example.com:23646
@@ -22,8 +31,10 @@ This deploys SeaweedFS as one `weed mini` process on one persistent volume. That
    - `media.` is the public read hostname that Cloudflare will cache. It is optional.
    - `storage-admin.` is the admin UI. It is optional, so leave it out to keep the UI unreachable.
    - Never attach a domain to any other port.
-4. Under **Environment Variables**, set `S3_APP_BUCKETS`. Coolify generates every secret on first deploy.
-5. Deploy. The first build takes a few minutes. Later builds reuse the Go module and build caches.
+4. Under **Environment Variables**, set `S3_APP_BUCKETS`, and `S3_PUBLIC_READ_BUCKETS` if any buckets serve public reads. See [Settings](#settings).
+5. Optional: under **Advanced**, set **Source commit availability** to **Available during build**, so the admin UI footer shows the deployed commit. It costs little: `SOURCE_COMMIT` is read after the source is copied in, and the Go build cache keeps rebuilds incremental.
+6. Deploy. The first build takes a few minutes. Later builds reuse the Go module and build caches.
+7. Check it: `curl -fsS https://s3.example.com/healthz` returns 200. Sign in to the admin UI as `admin` with `SERVICE_PASSWORD_ADMIN`.
 
 Coolify generates these secrets, and they don't change on redeploy:
 

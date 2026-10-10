@@ -11,7 +11,7 @@
 #   LARGE_MB=520   size of the large-upload test (0 skips it; default 520)
 #   KEEP=1         leave the stacks running afterwards
 #   SKIP_BUILD=1   reuse the last built image
-# Needs docker, python3 with boto3.
+# Needs docker, python3 with boto3 and PyYAML.
 set -eu
 
 here=$(cd "$(dirname "$0")" && pwd)
@@ -84,7 +84,15 @@ wait_healthy() {
 
 rnd() { LC_ALL=C tr -dc "$1" < /dev/urandom | head -c "$2"; }
 
-log "1/5 start.sh unit tests"
+log "1/5 start.sh unit tests and compose lint"
+# Coolify converts the environment list to a map; a bare KEY (no =) becomes
+# the non-string key 0 and the deploy fails before building.
+python3 - "$coolify/docker-compose.yml" <<'PY' || die "compose environment entries must all be KEY=value"
+import sys, yaml
+env = yaml.safe_load(open(sys.argv[1]))["services"]["seaweedfs"]["environment"]
+bad = [e for e in env if "=" not in e]
+sys.exit(f"bare entries: {bad}" if bad else 0)
+PY
 retry 3 docker run --rm -v "$coolify:/t:ro" alpine:3.23 \
   sh -c 'apk add -q --no-cache "openssl~3.5" > /dev/null && sh /t/start_test.sh' >&2 || die "start.sh tests"
 
@@ -98,7 +106,7 @@ SERVICE_HEX_64_JWTWRITE=$(rnd a-f0-9 64)
 SERVICE_HEX_64_JWTREAD=$(rnd a-f0-9 64)
 SERVICE_HEX_64_FILERWRITE=$(rnd a-f0-9 64)
 SERVICE_HEX_64_FILERREAD=$(rnd a-f0-9 64)
-SERVICE_URL_SEAWEEDFS_8333=https://127.0.0.1:18443
+S3_PUBLIC_URL=https://127.0.0.1:18443
 S3_APP_BUCKETS=njozi-media,njozi-models
 S3_PUBLIC_READ_BUCKETS=njozi-media
 EOF

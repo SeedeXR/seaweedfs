@@ -19,6 +19,11 @@ services:
       args:
         # Coolify passes the git SHA when Advanced -> "Source commit availability" is "Available during build".
         SOURCE_COMMIT: ${SOURCE_COMMIT:-}
+    # Lets Coolify offer these ports for domains (S3, admin UI). Not published
+    # on the host; metrics (9327) stays unlisted so it never gets a domain.
+    expose:
+      - "8333"
+      - "23646"
     command:
       - mini
       - -dir=/data
@@ -37,8 +42,9 @@ services:
       # Prometheus /metrics for a scraper on the same Coolify network. Never
       # attach a domain to this port.
       - -metricsPort=9327
+    # Every entry must be KEY=value: Coolify turns this list into a map, and a
+    # bare KEY becomes the non-string key 0, which compose rejects.
     environment:
-      - SERVICE_URL_SEAWEEDFS_8333
       # start.sh refuses to boot if any of the next three is empty.
       # S3 admin identity: full access, for operators only.
       - AWS_ACCESS_KEY_ID=${SERVICE_USER_S3}
@@ -64,8 +70,12 @@ services:
       # your S3/media hostname. <img>, <video>, fetch() and model loaders are
       # unaffected. Empty it if you host a website from a bucket.
       - "WEED_S3_CONTENT_SECURITY_POLICY=${S3_CONTENT_SECURITY_POLICY-sandbox; default-src 'none'; img-src 'self' data:; media-src 'self'; frame-ancestors 'none'}"
-      - S3_EXTERNAL_URL=${SERVICE_URL_SEAWEEDFS_8333}
-      - WEED_S3_PUBLIC_ENDPOINT=${SERVICE_URL_SEAWEEDFS_8333}
+      # The public S3 URL, e.g. https://s3.example.com (no port). Optional:
+      # signatures verify from the proxy's forwarded headers without it. Not
+      # derived from SERVICE_URL_*, which can be Coolify's generated http domain
+      # with the container port appended.
+      - S3_EXTERNAL_URL=${S3_PUBLIC_URL:-}
+      - WEED_S3_PUBLIC_ENDPOINT=${S3_PUBLIC_URL:-}
       # Buckets created on startup; defaults to S3_APP_BUCKETS.
       - S3_BUCKET=${S3_BUCKET:-}
       # Soft heap ceiling for the Go GC, e.g. 900MiB when the container has 1GiB.
